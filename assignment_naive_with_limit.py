@@ -2,6 +2,7 @@ print("Welcome to this prover program. ")
 from collections import deque
 import itertools
 import FOL_parser
+import time
 
 
 class Sequent:
@@ -9,7 +10,6 @@ class Sequent:
         self.gamma = gamma
         self.delta = delta
         self.used_insts = used_insts if used_insts is not None else set()
-        # FIX 1: Every branch maintains its own list of known terms to prevent cross-contamination
         self.domain_terms = domain_terms if domain_terms is not None else ["c"]
 
     def is_axiom(self):
@@ -21,14 +21,19 @@ class Sequent:
         if any(f.is_bot() for f in self.gamma): return True
         return False
 
-def prove_lk_baseline(formula, initial_domain=None):
+def prove_lk_baseline(formula, initial_domain=None, max_steps=1000):
     init_domain = list(initial_domain) if initial_domain else ["c"]
     term_counter = itertools.count(1) 
     
     initial_sequent = Sequent(gamma=[], delta=[formula], used_insts=set(), domain_terms=init_domain)
     open_branches = deque([initial_sequent])
+
+    steps = 0
     
     while open_branches:
+        steps += 1
+        if steps > max_steps:
+            return False
         seq = open_branches.popleft()
         
         if seq.is_axiom():
@@ -102,7 +107,6 @@ def prove_lk_baseline(formula, initial_domain=None):
                 applied_rule = True; break
         if applied_rule: continue
 
-        # FIX 2: Strict separation of Step 4 (Existing terms) and Step 5 (Fresh terms)
         
         # 4. Instantiation rules (Priority: Try all EXISTING terms first)
         for i, f in enumerate(seq.gamma):
@@ -130,7 +134,7 @@ def prove_lk_baseline(formula, initial_domain=None):
         if applied_rule: continue
 
         # 5. Instantiation rules (Fallback: Generate a FRESH term)
-        # We ONLY reach here if NO existing terms could be instantiated for ANY Forall L / Exists R.
+        # ONLY reach here if NO existing terms could be instantiated for ANY Forall L / Exists R.
         for i, f in enumerate(seq.gamma):
             if f.is_forall():
                 fresh_term = f"t_{next(term_counter)}"
@@ -160,11 +164,14 @@ def prove_lk_baseline(formula, initial_domain=None):
         # 6. Branch remains irreconcilably open
         return False 
 
-    # If the queue empties out, all branches successfully closed
+    # If the queue depleted, all branches successfully closed
     return True
 
 def run_benchmark_suite(filename):
     print(f"Loading benchmarks from {filename}...\n")
+    start_time = time.perf_counter()
+    problem_count=0
+    provable_count=0
     
     with open(filename, 'r', encoding='utf-8') as f:
         lines = f.readlines()
@@ -176,6 +183,7 @@ def run_benchmark_suite(filename):
             
         print(f"--- Problem {i+1} ---")
         print(f"Formula: {line}")
+        problem_count+=1
         
         try:
             # 1. Parse the string into an AST
@@ -183,7 +191,7 @@ def run_benchmark_suite(filename):
             ast_formula = parser.parse()
             
             # 2. Extract known domain constants to seed the prover 
-            # (In our generated data, "c" is the main constant)
+            # ("c" is the default constant)
             domain_terms = {"c"} 
             
             # 3. Run the baseline prover
@@ -191,10 +199,16 @@ def run_benchmark_suite(filename):
             result = prove_lk_baseline(ast_formula, domain_terms)
             
             print(f"Result: {'Provable' if result else 'Failed to prove'}\n")
+
+            if result:
+                provable_count+=1
             
         except Exception as e:
             print(f"Error processing problem {i+1}: {e}\n")
+    print (f"Proved: {provable_count} / {problem_count}")
+    end_time = time.perf_counter()
+    print(f"Elapsed time: {end_time - start_time:.0f} seconds")
 
 # Run it!
 if __name__ == "__main__":
-    run_benchmark_suite("text_book_questions.txt")
+    run_benchmark_suite("combined_benchmarks.txt")
