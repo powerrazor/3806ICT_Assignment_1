@@ -100,8 +100,6 @@ def prove_lk_baseline(formula, initial_domain=None):
                 open_branches.append(Sequent(seq.gamma, d_rem + [f.right], set(seq.used_insts), list(seq.domain_terms)))
                 applied_rule = True; break
         if applied_rule: continue
-
-        # FIX 2: Strict separation of Step 4 (Existing terms) and Step 5 (Fresh terms)
         
         # 4. Instantiation rules (Priority: Try all EXISTING terms first)
         for i, f in enumerate(seq.gamma):
@@ -129,7 +127,6 @@ def prove_lk_baseline(formula, initial_domain=None):
         if applied_rule: continue
 
         # 5. Instantiation rules (Fallback: Generate a FRESH term)
-        # We ONLY reach here if NO existing terms could be instantiated for ANY Forall L / Exists R.
         for i, f in enumerate(seq.gamma):
             if f.is_forall():
                 fresh_term = f"t_{next(term_counter)}"
@@ -156,10 +153,10 @@ def prove_lk_baseline(formula, initial_domain=None):
                 applied_rule = True; break
         if applied_rule: continue
 
-        # 6. Branch remains irreconcilably open
+        # 6. Branch still open
         return False 
 
-    # If the queue empties out, all branches successfully closed
+    # deque empties
     return True
 
 def run_benchmark_suite(filename):
@@ -177,12 +174,11 @@ def run_benchmark_suite(filename):
         print(f"Formula: {line}")
         
         try:
-            # 1. Parse the string into an AST
+            # 1. Parse to AST
             parser = FOL_parser.FOLParser(line)
             ast_formula = parser.parse()
             
-            # 2. Extract known domain constants to seed the prover 
-            # ("c" is the main constant in the syntax in use)
+            # 2. ("c" is the main constant in the syntax in use)
             domain_terms = {"c"} 
             
             # 3. Run the baseline prover
@@ -194,6 +190,5 @@ def run_benchmark_suite(filename):
         except Exception as e:
             print('Failed to prove\n')
 
-# Run it!
 if __name__ == "__main__":
-    run_benchmark_suite("text_book_questions.txt")
+    run_benchmark_suite("generated_fof_benchmarks.txt")

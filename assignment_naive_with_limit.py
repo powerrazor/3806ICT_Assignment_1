@@ -134,7 +134,6 @@ def prove_lk_baseline(formula, initial_domain=None, max_steps=1000):
         if applied_rule: continue
 
         # 5. Instantiation rules (Fallback: Generate a FRESH term)
-        # ONLY reach here if NO existing terms could be instantiated for ANY Forall L / Exists R.
         for i, f in enumerate(seq.gamma):
             if f.is_forall():
                 fresh_term = f"t_{next(term_counter)}"
@@ -161,10 +160,10 @@ def prove_lk_baseline(formula, initial_domain=None, max_steps=1000):
                 applied_rule = True; break
         if applied_rule: continue
 
-        # 6. Branch remains irreconcilably open
+        # 6. Branch still open
         return False 
 
-    # If the queue depleted, all branches successfully closed
+    # deque empties
     return True
 
 def run_benchmark_suite(filename):
@@ -190,8 +189,7 @@ def run_benchmark_suite(filename):
             parser = FOL_parser.FOLParser(line)
             ast_formula = parser.parse()
             
-            # 2. Extract known domain constants to seed the prover 
-            # ("c" is the default constant)
+            # 2. ("c" is the main constant in the syntax in use)
             domain_terms = {"c"} 
             
             # 3. Run the baseline prover
@@ -209,6 +207,5 @@ def run_benchmark_suite(filename):
     end_time = time.perf_counter()
     print(f"Elapsed time: {end_time - start_time:.0f} seconds")
 
-# Run it!
 if __name__ == "__main__":
     run_benchmark_suite("combined_benchmarks.txt")

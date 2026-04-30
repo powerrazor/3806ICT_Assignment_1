@@ -37,7 +37,7 @@ def prove_lk_depth_limited(formula, initial_domain, max_depth, max_steps=5000):
     while open_branches:
         steps += 1
         if steps > max_steps:
-            return "TIMEOUT" # Prevents freezing on massively wide trees
+            return "TIMEOUT" # Prevents stuck on huge number of branches
             
         seq = open_branches.popleft()
         
@@ -172,9 +172,9 @@ def prove_lk_depth_limited(formula, initial_domain, max_depth, max_steps=5000):
                     applied_rule = True; break
             if applied_rule: continue
 
-        # 6. Branch remains irreconcilably open
+        # 6. Branch still open
         return False 
-
+    # deque empties
     return True
 
 def prove_with_iterative_deepening(formula, initial_domain=None, absolute_max=5):
