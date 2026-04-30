@@ -228,7 +228,7 @@ def run_benchmark_suite(filename):
                 provable_count+=1
             
         except Exception as e:
-            print(f"Error processing problem {i+1}: {e}\n")
+            print('Failed to prove\n')
             
     print (f"Proved: {provable_count} / {problem_count}")
     end_time = time.perf_counter()

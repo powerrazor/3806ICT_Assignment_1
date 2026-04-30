@@ -192,7 +192,7 @@ def run_benchmark_suite(filename):
             print(f"Result: {'Provable' if result else 'Failed to prove'}\n")
             
         except Exception as e:
-            print(f"Error processing problem {i+1}: {e}\n")
+            print('Failed to prove\n')
 
 # Run it!
 if __name__ == "__main__":
